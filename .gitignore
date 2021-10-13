@@ -1,0 +1,8 @@
+# Default ignored files
+*.iws
+*.iml
+*.ipr
+*.log
+/out
+/target
+/log
