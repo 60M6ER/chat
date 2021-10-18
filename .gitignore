@@ -7,3 +7,7 @@
 /target
 /log
 *.db
+
+logs/history_boris.txt
+
+logs/history_ivan.txt
