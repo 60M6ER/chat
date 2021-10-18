@@ -162,12 +162,17 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
                 changeNickname(client, arr[1]);
                 break;
             case Common.TYPE_CLIENT_PRIVATE:
-                sendToClient(arr[3],
-                        Common.getTypeClientPrivate(client.getNickname(), arr[3], arr[4]));
+                sendPrivateMessage(client.getNickname(), arr[3], arr[4]);
                 break;
             default:
                 client.msgFormatError(msg);
         }
+    }
+
+    private void sendPrivateMessage(String sender, String recipient, String msg) {
+        String packet = Common.getTypeClientPrivate(sender, recipient, msg);
+        sendToClient(sender, packet);
+        sendToClient(recipient, packet);
     }
 
     private void sendToAllAuthorizedClients(String msg) {

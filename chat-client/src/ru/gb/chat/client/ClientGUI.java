@@ -10,12 +10,14 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.List;
 
 public class ClientGUI extends JFrame implements ActionListener, Thread.UncaughtExceptionHandler, SocketThreadListener, ListSelectionListener {
 
@@ -50,6 +52,8 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
     private SocketThread socketThread;
     private final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss: ");
     private final String WINDOW_TITLE = "Chat";
+
+    private boolean FWError = false;
 
     private ClientGUI() {
         Thread.setDefaultUncaughtExceptionHandler(this);
@@ -127,6 +131,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         } else if (src == btnSend || src == tfMessage) {
             sendMessage();
         } else if (src == btnLogin) {
+            loadHistory();
             connect();
         } else if (src == btnDisconnect) {
             socketThread.close();
@@ -139,6 +144,23 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
             changeNick();
         } else {
             throw new RuntimeException("Unknown source: " + src);
+        }
+    }
+
+    private void loadHistory() {
+        File file = new File(HistoryService.getPrefix() + tfLogin.getText() + HistoryService.getPostfix());
+        if (file.exists()) {
+            log.selectAll();
+            log.replaceSelection("");
+            try {
+                List<String> historyLogs = HistoryService.getHistoryService(file).getHistory();
+                for (int i = 0; i < historyLogs.size(); i++) {
+                    log.append(historyLogs.get(i) + "\n");
+                }
+                log.setCaretPosition(log.getDocument().getLength());
+            } catch (IOException e) {
+                System.out.println("");
+            }
         }
     }
 
@@ -199,6 +221,14 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
             public void run() {
                 log.append(msg + "\n");
                 log.setCaretPosition(log.getDocument().getLength());
+                try {
+                    if (!FWError)
+                        HistoryService.getHistoryService(tfLogin.getText()).writeLog(msg);
+                } catch (IOException e) {
+                    log.append("Unable to write history to file!\n");
+                    FWError = true;
+                    e.printStackTrace();
+                }
             }
         });
     }
